@@ -1,8 +1,15 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Data;
+using EcoPower_Logistics.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
+
+
+builder.Services.AddTransient<ICustomerRepository, CustomerRepository>();
+builder.Services.AddTransient<IOrderRepository, OrderRepository>();
+builder.Services.AddTransient<IOrderDetailsRepository, OrderDetailsRepository>();
+builder.Services.AddTransient<IProductRepository, ProductRepository>();
 
 // Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");

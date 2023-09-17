@@ -8,51 +8,34 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Models;
 using Data;
+using EcoPower_Logistics.Repositories;
 
 namespace Controllers
 {
     [Authorize]
     public class OrdersController : Controller
     {
-        private readonly SuperStoreContext _context;
+        private readonly IOrderRepository _orderRepository;
 
-        public OrdersController(SuperStoreContext context)
+        public OrdersController(IOrderRepository orderRepository)
         {
-            _context = context;
+            _orderRepository = orderRepository;
         }
 
         // GET: Orders
         public async Task<IActionResult> Index()
         {
-            var superStoreContext = _context.Orders.Include(o => o.Customer);
-            return View(await superStoreContext.ToListAsync());
+            var result = await _orderRepository.GetOrdersAsync();
+            return Ok(result);
         }
 
         // GET: Orders/Details/5
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null || _context.Orders == null)
-            {
-                return NotFound();
-            }
-
-            var order = await _context.Orders
-                .Include(o => o.Customer)
-                .FirstOrDefaultAsync(m => m.OrderId == id);
-            if (order == null)
-            {
-                return NotFound();
-            }
-
-            return View(order);
+            var result = await _orderRepository.GetOrderByIdAsync(id);
+            return Ok(result);
         }
 
-        // GET: Orders/Create
-        public IActionResult Create()
-        {
-            ViewData["CustomerId"] = new SelectList(_context.Customers, "CustomerId", "CustomerId");
-            return View();
-        }
 
         // POST: Orders/Create
         // To protect from overposting attacks, enable the specific properties you want to bind to.
@@ -61,31 +44,8 @@ namespace Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("OrderId,OrderDate,CustomerId,DeliveryAddress")] Order order)
         {
-            if (ModelState.IsValid)
-            {
-                _context.Add(order);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["CustomerId"] = new SelectList(_context.Customers, "CustomerId", "CustomerId", order.CustomerId);
-            return View(order);
-        }
-
-        // GET: Orders/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null || _context.Orders == null)
-            {
-                return NotFound();
-            }
-
-            var order = await _context.Orders.FindAsync(id);
-            if (order == null)
-            {
-                return NotFound();
-            }
-            ViewData["CustomerId"] = new SelectList(_context.Customers, "CustomerId", "CustomerId", order.CustomerId);
-            return View(order);
+            var result = _orderRepository.AddOrderAsync(order);
+            return Ok(result);
         }
 
         // POST: Orders/Edit/5
@@ -95,52 +55,8 @@ namespace Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("OrderId,OrderDate,CustomerId,DeliveryAddress")] Order order)
         {
-            if (id != order.OrderId)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(order);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!OrderExists(order.OrderId))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["CustomerId"] = new SelectList(_context.Customers, "CustomerId", "CustomerId", order.CustomerId);
-            return View(order);
-        }
-
-        // GET: Orders/Delete/5
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null || _context.Orders == null)
-            {
-                return NotFound();
-            }
-
-            var order = await _context.Orders
-                .Include(o => o.Customer)
-                .FirstOrDefaultAsync(m => m.OrderId == id);
-            if (order == null)
-            {
-                return NotFound();
-            }
-
-            return View(order);
+            var result = _orderRepository.UpdateOrderAsync(order);
+            return Ok(result);
         }
 
         // POST: Orders/Delete/5
@@ -148,23 +64,8 @@ namespace Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            if (_context.Orders == null)
-            {
-                return Problem("Entity set 'SuperStoreContext.Orders'  is null.");
-            }
-            var order = await _context.Orders.FindAsync(id);
-            if (order != null)
-            {
-                _context.Orders.Remove(order);
-            }
-
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
-
-        private bool OrderExists(int id)
-        {
-            return (_context.Orders?.Any(e => e.OrderId == id)).GetValueOrDefault();
+            var result = _orderRepository.DeleteOrderAsync(id);
+            return Ok(result);
         }
     }
 }
